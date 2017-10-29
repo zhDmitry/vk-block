@@ -38,6 +38,13 @@
         <v-flex xs12>
           <v-text-field v-model="groupName" box label="Название группы"></v-text-field>
         </v-flex>
+
+        <v-flex xs12>
+          <v-text-field v-model="groupId" box label="Id группы"></v-text-field>
+        </v-flex>
+        <v-flex xs12>
+          <v-checkbox v-model="skipMales" box label="Пропустить мужчин"></v-checkbox>
+        </v-flex>
         <v-flex xs12>
           <v-text-field v-model="skipList" box multi-line label="Каких людей надо пропустить(12,123,123,) список айдишников"></v-text-field>
         </v-flex>
@@ -55,8 +62,7 @@
             </v-progress-circular>
           </v-flex>
           <div v-for="item in ids" :key="item.from_id">
-
-            <a target="_blank"  :href="'https:/vk.com/id'+item.from_id"> id{{item.from_id}} </a>
+            <a target="_blank"  :href="'https://vk.com/id'+item.from_id"> id{{item.from_id}} </a>
           </div>
           </span>
         </v-card-text>
@@ -78,8 +84,10 @@ export default {
       ids: [],
       progress: 0,
       dialog: false,
+      groupId: -1,
       reason: "0",
       groupName: "",
+      skipMales: true,
       skipList: "",
       banFirst: 30,
       delayAfterUserEnd: 1,
@@ -112,8 +120,10 @@ export default {
         reason,
         groupsList,
         skipList,
+        skipMales,
         banFirst,
         groupName,
+        groupId,
         delayAfterUserEnd,
         delay
       } = this.$data;
@@ -130,13 +140,18 @@ export default {
           }
           mapIds[el.from_id] = true;
         },
-        shouldBan: ({ from_id }) => {
+        shouldBan: ({ from_id, user }) => {
+          if (user.sex === 2 && skipMales) {
+            return false;
+          }
+          console.log(user);
           this.$data.progress += Math.ceil(100 / Number(banFirst));
           return skip.indexOf(from_id) === -1 && from_id > 0;
         },
         token: this.token,
         banFirst,
         delayAfterUserEnd,
+        groupId,
         delay,
         groupName: groupName
       })

@@ -8,6 +8,7 @@
     "dev": "node build/dev-server.js",
     "start": "npm run dev",
     "deploy": "gh-pages -d dist",
+    "predeploy": "npm run build",
     "build": "node build/build.js",
     "lint": "eslint --ext .js,.vue src"
   },
@@ -20,6 +21,7 @@
     "vue-router": "^3.0.1",
     "vuetify": "*"
   },
+  "homepage": "https://zhdmitry.github.io/vk-block",
   "devDependencies": {
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",

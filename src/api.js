@@ -19,6 +19,7 @@ export const run = ({
   updateState,
   catchError = console.error,
   groupsList,
+  groupId,
   skipList,
   banFirst,
   delayAfterUserEnd,
@@ -35,17 +36,19 @@ export const run = ({
   const bannded = new Set();
 
   //----
-  const getBannded = () =>
+  const getUsers = ids =>
     instance.get('users.get', {
       params: {
         ...baseParams,
-        user_ids: [...bannded].join(','),
+        user_ids: [...ids].join(','),
+        fields: 'sex',
       },
     });
 
   const blockPost = ({ id, owner_id, ...rest }) =>
     delay(Number(delayTime) * 1000)
-      .then(() => shouldBan({ id, owner_id, ...rest }))
+      .then(() => getUsers([rest.from_id]))
+      .then(user => shouldBan({ id, owner_id, user: user.data.response[0], ...rest }))
       .then(res => (res ? Promise.resolve() : Promise.reject()))
       .then(() =>
         instance.get('wall.reportPost', {
@@ -53,6 +56,7 @@ export const run = ({
             ...baseParams,
             reason,
             owner_id,
+            post_id: id,
           },
         }),
       )
@@ -66,7 +70,7 @@ export const run = ({
           ...baseParams,
           count: Number(banFirst),
           offset: 0,
-          domain: groupName,
+          [groupName ? 'domain' : 'owner_id']: groupName || `-${groupId}`,
         },
       })
       .then(el => el.data.response.items);
@@ -87,6 +91,5 @@ export const run = ({
     });
   return {
     start: blockItems,
-    getBannded,
   };
 };

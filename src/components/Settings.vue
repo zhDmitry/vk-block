@@ -56,10 +56,8 @@
           <span class="headline">Заблокированные пользователи</span>
         </v-card-title>
         <v-card-text>
-          <v-flex xs12 style="display:flex;justify-content:center" v-if="progress!== 100">
-            <v-progress-circular v-bind:size="100" v-bind:width="15" v-bind:rotate="-90" v-bind:value="progress" color="primary">
-              {{ progress }}
-            </v-progress-circular>
+           <v-flex xs12 style="display:flex;justify-content:center" v-if="progress!== 100">
+              <v-progress-linear v-bind:indeterminate="true"></v-progress-linear>
           </v-flex>
           <div v-for="item in ids" :key="item.from_id">
             <a target="_blank"  :href="'https://vk.com/id'+item.from_id"> id{{item.from_id}} </a>
@@ -115,6 +113,7 @@ export default {
     ban() {
       this.$data.ids = [];
       this.$data.progress = 0;
+      this.$data.dialog = true;
 
       const {
         reason,
@@ -127,8 +126,15 @@ export default {
         delayAfterUserEnd,
         delay
       } = this.$data;
+      const groupsByIds = groupId
+        .split(/[, ]+/)
+        .map(el => ({ type: "owner_id", value: `-${el}` }));
+      const groupsByName = groupName
+        .split(/[, ]+/)
+        .map(el => ({ type: "domain", value: el }));
+      const groups = groupsByIds.concat(groupsByName);
+
       const skip = skipList.split(/[, ]+/).map(el => Number(el));
-      this.$data.dialog = true;
       const mapIds = {};
       run({
         reason,
@@ -151,11 +157,9 @@ export default {
         token: this.token,
         banFirst,
         delayAfterUserEnd,
-        groupId,
-        delay,
-        groupName: groupName
+        delay
       })
-        .start()
+        .start(groups)
         .then(el => {
           this.$data.progress = 100;
           console.log(el);

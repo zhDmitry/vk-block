@@ -14,12 +14,10 @@ const delay = time =>
 export const run = ({
   token,
   reason,
-  groupName,
   shouldBan = () => true,
   updateState,
   catchError = console.error,
   groupsList,
-  groupId,
   skipList,
   banFirst,
   delayAfterUserEnd,
@@ -63,33 +61,31 @@ export const run = ({
       .then((el) => {
         updateState({ id, owner_id, ...rest });
       });
-  const getItems = () =>
+  const getItems = ({ value, type }) =>
     instance
       .get('wall.get', {
         params: {
           ...baseParams,
           count: Number(banFirst),
           offset: 0,
-          [groupName ? 'domain' : 'owner_id']: groupName || `-${groupId}`,
+          [type]: value,
         },
       })
       .then(el => el.data.response.items);
-  const blockItems = () =>
-    getItems().then((items) => {
+  const blockItems = item =>
+    getItems(item).then((items) => {
       const res = items.reduce(
-        (acc, post) =>
-          acc.then(() =>
-            blockPost({ ...post, token, groupName })
-              .then((el) => {
-                bannded.add(post);
-              })
-              .catch(console.error),
-          ),
+        (acc, post) => acc.then(() => blockPost(post).then(el => bannded.add(post), console.error)),
         Promise.resolve(),
       );
       return res.then(() => [...bannded]);
     });
+
+  const blockMultiple = list => list.reduce(
+      (acc, el) => acc.then(() => blockItems(el), console.error),
+      Promise.resolve(),
+    );
   return {
-    start: blockItems,
+    start: blockMultiple,
   };
 };
